@@ -13,6 +13,12 @@ def logout_user():
     session.pop("username", None)
     session.pop("admin", None)
 
+def store_login_again():
+	session["login_again"] = True
+
+def remove_login_again():
+	session.pop("login_again", None)
+
 def is_login():
     if "id" in session:
         return True
@@ -21,6 +27,12 @@ def is_login():
 
 def is_admin():
     return session.get("admin", False)
+
+def is_login_again():
+	if "login_again" in session:
+		return True
+	else:
+		return False
 
 @app.context_processor
 def login():

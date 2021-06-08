@@ -414,10 +414,15 @@ def Implementation():
 @app.route('/login',methods=['GET', 'POST'])
 def login():
     from  models import Users_DB
-    from login import login_user
-    if not os.path.exists(SQLALCHEMY_DATABASE_DIR):
-	    return redirect(url_for('index'))
+    from login import login_user, store_login_again, remove_login_again, is_login_again
     form = LoginForm()
+    if not os.path.exists(SQLALCHEMY_DATABASE_DIR):
+	    if request.method == "POST":
+		    store_login_again()
+	    return redirect(url_for('index'))
+    if is_login_again():
+	    flash("Please, re-enter credentials", "warning")
+	    remove_login_again()
     if form.validate_on_submit():
         user = Users_DB.query.filter_by(username=form.username.data).first()
         if user is not None and user.verify_password(form.password.data):

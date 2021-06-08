@@ -36,16 +36,16 @@
     <div class="col-md-12 text-center plan-card justify-content-center">
         {% with messages = get_flashed_messages(with_categories=true) %} {% if messages %} {% for category, message in messages %} {% if "success" in category %}
 
-        <div class="alert text-success" role="alert" id="alert_div">
+        <div class="alert text-success" role="alert">
             {{ message }}
         </div>
         {% elif "danger" in category %}
 
-        <div class="alert text-danger" id="alert_div">
+        <div class="alert text-danger">
             {{ message }}
         </div>
         {% else %}
-        <div class="alert text-warning" id="alert_div">
+        <div class="alert text-warning">
             {{ message }}
         </div>
         {% endif %} {% endfor %} {% endif %} {% endwith %}
@@ -106,7 +106,7 @@
 </div>
 <script>
     setTimeout(function() {
-        $("#alert_div").fadeOut("fast");
+        $(".alert").fadeOut("fast");
     }, 5500); // <-- time in milliseconds
 </script>
 {% endblock %}
