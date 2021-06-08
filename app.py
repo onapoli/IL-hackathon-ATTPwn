@@ -415,6 +415,8 @@ def Implementation():
 def login():
     from  models import Users_DB
     from login import login_user
+    if not os.path.exists(SQLALCHEMY_DATABASE_DIR):
+	    return redirect(url_for('index'))
     form = LoginForm()
     if form.validate_on_submit():
         user = Users_DB.query.filter_by(username=form.username.data).first()
