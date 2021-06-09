@@ -3,6 +3,7 @@ from contextlib import closing
 from flask import Flask, render_template, url_for, request, redirect, jsonify, config, make_response
 from flask import Response
 from flask import flash
+from flask.globals import session
 from flask_bootstrap import Bootstrap
 from flask_login import LoginManager,login_user,logout_user,login_required,current_user
 from flask_sqlalchemy import SQLAlchemy
@@ -38,7 +39,8 @@ from config import CONSOLE_PATH
 from config import CONSOLE_VERSION
 from config import APP_VERSION
 
-
+import random
+import string
 
 # from models imp
 app = Flask(__name__)
@@ -343,6 +345,13 @@ def InsertarDatos_BD(objetos):
         IDIntel = insertar_Inteligencia(inteligencias[i])
 
         insertar_Tarea(tareas[i],IDPlan,IDIntel)
+
+def generate_warrior_id():
+	res = ""
+	possibs = string.ascii_letters + string.digits
+	for _ in range(6):
+	    res += possibs[random.randrange(len(possibs) - 1)]
+	return res
 
 # elimina un plan pasado por post
 @app.route('/deletePlan',methods=['GET', 'POST'])
@@ -1038,32 +1047,37 @@ def addDataStore(warriorAlias):
 @app.route('/warriors',methods=['GET', 'POST'])
 def warriors():
     from login import is_login
+    from flask import session
     if is_login() == False :
-        return redirect(url_for("login"))   
+        return redirect(url_for("login"))
+    if 'pending_plan_id' not in session:
+	    return redirect(url_for("plan"))
     def existeConsola(filename):
         return os.path.isfile(filename)
     
     def existeBypass(filename):
         return os.path.isfile(filename)
 
-    def sustituirConsola(filenameTemplate,filename,ip):
+    def sustituirConsola(filenameTemplate,filename,ip, id):
         if existeConsola('consola/consola_template'):
             f = open(filenameTemplate, "r")
             consola_template = f.read()
             f.close()
             consola = consola_template.replace("$IP",ip)
+            consola = consola.replace("$ID", id)
             fd = open(filename, "w")
             fd.write(consola)
             fd.close()
             return True
         return False
     
-    def sustituirBypass(filenameTemplate,filename,ip):
+    def sustituirBypass(filenameTemplate,filename,ip, id):
         if existeBypass('consola/byp4ss_template'):
             f = open(filenameTemplate, "r")
             byp4ss_template = f.read()
             f.close()
             byp4ss = byp4ss_template.replace("$IP",ip)
+            byp4ss = byp4ss.replace("$ID", id)			
             fd = open(filename, "w")
             fd.write(byp4ss)
             print(byp4ss)
@@ -1081,11 +1095,12 @@ def warriors():
     if request.method == 'POST':
         good = False
         ip = request.form['ip']
-        if sustituirConsola(filenameTemplate,filename,ip):
+        id = generate_warrior_id()
+        if sustituirConsola(filenameTemplate,filename,ip, id):
             print("se ha sustituido")
             good = True
         if good:
-            if sustituirBypass(bypassTemplate,bypass,ip):
+            if sustituirBypass(bypassTemplate,bypass,ip, id):
                 print("se ha sustituido")
                 return render_template("warriors.html",ip=ip)
     return render_template("warriors.html")
@@ -1402,6 +1417,7 @@ def exportar():
         mimetype='application/json',
         headers={'Content-Disposition':'attachment;filename='+NamePlan+'.json'})
 
+'''
 @app.route('/ins_directive',methods=['POST'])
 def Ins_Directive():
     from login import is_login
@@ -1419,10 +1435,12 @@ def Ins_Directive():
         db.session.add(registro)
         db.session.commit()
     return redirect("Warrior_Orders/"+IDWarrior)
+'''
 
 @app.route('/sel_plan_/<IDPlan>',methods=['GET', 'POST'])
 def selplan(IDPlan):
     from login import is_login
+    from flask import session
     if is_login() == False :
         return redirect(url_for("login"))   
 
@@ -1444,16 +1462,12 @@ def selplan(IDPlan):
         taskObj['Plan'] = plan.Name
         TaskArray.append(taskObj)
 
-    plan = db.session.query(models.Plan_DB).filter_by(IDPlan = IDPlan).first()
-    warriorList = []
-    for warrior in  db.session.query(models.Warrior_DB).filter_by(State= "Alive" ).all():
-        warriorObj = {}
-        warriorObj['IDWarrior'] = warrior.IDWarrior
-        warriorObj['Alias'] = warrior.Alias
-        warriorList.append(warriorObj)
-    planName = plan.Name
+	#EN LUGAR DE LISTAR TODOS LOS WARRIORS VIVOS, GUARDAR IDPlan EN SESSION
 
-    return render_template("task.html",form = form ,warriorList = warriorList, Tasklist = TaskArray ,plan = planName.rstrip(),planDescription =plan.Description , idplan = plan.IDPlan)
+    session["pending_plan_id"] = IDPlan	
+    plan = db.session.query(models.Plan_DB).filter_by(IDPlan = IDPlan).first()
+    planName = plan.Name
+    return render_template("task.html",form = form , Tasklist = TaskArray ,plan = planName.rstrip(),planDescription =plan.Description , idplan = plan.IDPlan)
 
 @app.route('/import_plan_json',methods=['POST'])
 def Parsing():
@@ -1741,15 +1755,23 @@ def getplan():
     else:
         warrior = db.session.query(models.Warrior_DB).filter_by(Alias  = AliasWarrior).first()
         warrior.Lastseen = datetime.datetime.now()
-        db.session.commit()
-        rows = 0
-        rows = db.session.query(models.Directive_DB).filter_by(Done = "false" , IDWarrior = warrior.IDWarrior).count()
-        if rows > 0:
-            logging.debug('hay plan para el alias: '+ AliasWarrior)
-            return "true"
-        else:
+        if 'pending_plan_id' not in session:
+            db.session.commit()
             logging.debug('no hay plan para el alias: '+AliasWarrior )
             return "false"
+        plan_id = session.get('pending_plan_id', False)
+        session.pop('pending_plan_id', None)
+        Tasks = db.session.query(models.Task_DB).filter_by(IDPlan=plan_id).all()
+        for task in Tasks:
+            registro = models.Directive_DB(
+                IDTask = task.IDTask,
+                IDWarrior= warrior.IDWarrior,
+                Done = "false"
+                )
+            db.session.add(registro)
+        db.session.commit()
+        logging.debug('hay plan para el alias: '+ AliasWarrior)
+        return "true"
 
 @app.route('/givemeplan',methods=['POST'])
 def givemeplan():
@@ -1882,8 +1904,10 @@ def putresult():
 
 @app.route('/hi',methods=['POST'])
 def hi():
-
-    #Recibimos datos de warrior (id + info sistema)
+    from flask import session
+    if "pending_plan_id" not in session:
+	    return "500"
+	#Recibimos datos de warrior (id + info sistema)
     idwarrior = request.form['id']
     logging.debug('Alias warrior hi 1: '+idwarrior)
     name = request.form['name']

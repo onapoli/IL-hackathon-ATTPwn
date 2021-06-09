@@ -27,9 +27,6 @@ nav %}
         <a class="nav-link" href="/results">Results</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="/warriors">Warriors</a>
-      </li>
-      <li class="nav-item">
         <a class="nav-link" href="/attck">ATT&CK</a>
       </li>
       <li class="nav-item">
@@ -44,7 +41,6 @@ nav %}
 </nav>
 
 {% endblock nav %} {% block content %}
-<form action="/ins_directive" method="post">
   <div class="row">
     <div class="col-md">
       <h2 class="text-center logo-2">{{ plan }} task list</h2>
@@ -87,25 +83,9 @@ nav %}
     </div>
   </div>
 
-  <div class="row justify-content-end py-5">
-    <div class="col-md-3 plan-card py-1 pb-3">
-      <div class="row justify-content-center my-3">
-        <div class="col-md-5 h-100">
-          <h4 class="text-white text-center align-middle">Warrior ID:</h4>
-        </div>
-        <div class="col-md-7">
-          <select class="custom-select" id="warrior" name="warrior">
-            {% for warrior in warriorList %}
-            <option value="{{warrior.IDWarrior}}">{{warrior.Alias}}</option>
-            {% endfor %}
-          </select>
-        </div>
-      </div>
-    </form>
-
       <div class="row justify-content-center my-3">
         <div class="col-md">
-          <button type="submit" class="btn btn-outline w-100">
+          <button type="button" class="btn btn-outline w-100" onclick="alloc_plan()">
             Allocate Plan
           </button>
         </div>
@@ -151,6 +131,10 @@ nav %}
 
 <!--====== Javascripts & Jquery ======-->
 <script>
+	function alloc_plan()
+	{
+		window.location.assign("/warriors");
+	}
   function deletePlan() {
     var message;
     var opcion = confirm(

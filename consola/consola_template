@@ -84,7 +84,7 @@ function consola
 
 
 
-        $global:id = -join ((65..90) + (48..57) + (97..122)|Get-Random -Count 5 |% {[char]$_})
+        $global:id = $ID
         $global:id = "P"+$global:id
 
         $nameOS = (Get-WmiObject Win32_OperatingSystem).Name.Split("|")[0]
@@ -109,7 +109,7 @@ function consola
             #Si hay plan ejecutamos, si no dormimos
             if($plan.content.equals("false"))
             {
-                sleep(5)
+                exit
             }
             else #Ejecutamos plan (plan)
             {
