@@ -31,6 +31,7 @@ def create_database():
         ins_records.insert_plan()
         ins_records.insert_task()
         ins_records.insert_user()
+        ins_records.insert_pending()
         api.version_control(SQLALCHEMY_DATABASE_URI, SQLALCHEMY_MIGRATE_REPO, api.version(SQLALCHEMY_MIGRATE_REPO))
         ins_records.insert_version()        
         response = True

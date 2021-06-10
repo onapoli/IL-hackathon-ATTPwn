@@ -346,6 +346,11 @@ def InsertarDatos_BD(objetos):
 
         insertar_Tarea(tareas[i],IDPlan,IDIntel)
 
+# Nueva función para obtener plan pendiente
+def get_pending_plan():    
+    return db.session.query(models.Pending_DB).filter_by(IDPending = '1').first()
+
+# Nueva función para generar Alias de warrior aquí, en lugar de en powershell
 def generate_warrior_id():
 	res = ""
 	possibs = string.ascii_letters + string.digits
@@ -380,6 +385,9 @@ def deletePlan():
                     db.session.delete(Warrior)
 
         db.session.delete(tarea)
+    pending_plan = get_pending_plan()
+    if pending_plan.Pending_IDPlan == IDPlan:
+        pending_plan.Pending_IDPlan = None
 
 
     db.session.delete(plan)
@@ -1047,10 +1055,10 @@ def addDataStore(warriorAlias):
 @app.route('/warriors',methods=['GET', 'POST'])
 def warriors():
     from login import is_login
-    from flask import session
     if is_login() == False :
         return redirect(url_for("login"))
-    if 'pending_plan_id' not in session:
+    pending_plan = get_pending_plan()
+    if pending_plan.Pending_IDPlan == None:
 	    return redirect(url_for("plan"))
     def existeConsola(filename):
         return os.path.isfile(filename)
@@ -1440,7 +1448,6 @@ def Ins_Directive():
 @app.route('/sel_plan_/<IDPlan>',methods=['GET', 'POST'])
 def selplan(IDPlan):
     from login import is_login
-    from flask import session
     if is_login() == False :
         return redirect(url_for("login"))   
 
@@ -1463,8 +1470,10 @@ def selplan(IDPlan):
         TaskArray.append(taskObj)
 
 	#EN LUGAR DE LISTAR TODOS LOS WARRIORS VIVOS, GUARDAR IDPlan EN SESSION
-
-    session["pending_plan_id"] = IDPlan	
+    pending_plan = get_pending_plan()
+    if pending_plan.Pending_IDPlan != IDPlan:
+        pending_plan.Pending_IDPlan = IDPlan
+    db.session.commit()	
     plan = db.session.query(models.Plan_DB).filter_by(IDPlan = IDPlan).first()
     planName = plan.Name
     return render_template("task.html",form = form , Tasklist = TaskArray ,plan = planName.rstrip(),planDescription =plan.Description , idplan = plan.IDPlan)
@@ -1755,12 +1764,13 @@ def getplan():
     else:
         warrior = db.session.query(models.Warrior_DB).filter_by(Alias  = AliasWarrior).first()
         warrior.Lastseen = datetime.datetime.now()
-        if 'pending_plan_id' not in session:
+        pending_plan = get_pending_plan()	
+        if pending_plan.Pending_IDPlan == None:
             db.session.commit()
             logging.debug('no hay plan para el alias: '+AliasWarrior )
             return "false"
-        plan_id = session.get('pending_plan_id', False)
-        session.pop('pending_plan_id', None)
+        plan_id = pending_plan.Pending_IDPlan
+        pending_plan.Pending_IDPlan = None
         Tasks = db.session.query(models.Task_DB).filter_by(IDPlan=plan_id).all()
         for task in Tasks:
             registro = models.Directive_DB(
@@ -1904,8 +1914,8 @@ def putresult():
 
 @app.route('/hi',methods=['POST'])
 def hi():
-    from flask import session
-    if "pending_plan_id" not in session:
+    pending_plan = get_pending_plan()	
+    if pending_plan.Pending_IDPlan == None:
 	    return "500"
 	#Recibimos datos de warrior (id + info sistema)
     idwarrior = request.form['id']

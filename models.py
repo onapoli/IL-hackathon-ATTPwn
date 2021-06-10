@@ -146,4 +146,10 @@ class Users_DB(db.Model):
     def verify_password(self, password):
 	    return seguridad.check_password_hash(self.password_hash, password)
 
+
+class Pending_DB(db.Model):
+	__tablename__ 				= "pending_plan"
+	IDPending					= db.Column(db.Integer, primary_key= True, nullable=False)
+	Pending_IDPlan				= foreign_key_column("IDPlan", db.Integer, "Plan.IDPlan", nullable=True)
+
    

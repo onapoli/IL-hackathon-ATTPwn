@@ -972,4 +972,11 @@ def insert_user():
         models.Users_DB(id = '1', username = 'root',password_hash ='pbkdf2:sha256:150000$5pMOtD6w$3d33b60f62b7d06ecd4544c22786c3909c1ce1c13260c29e96a69b893e90e535', admin=1)
     ]
     s.bulk_save_objects(objects)
+    s.commit()
+
+def insert_pending():    
+    objects = [
+        models.Pending_DB(IDPending = '1', Pending_IDPlan = None)
+    ]
+    s.bulk_save_objects(objects)
     s.commit() 
