@@ -84,7 +84,7 @@ function consola
 
 
 
-        $global:id = $ID
+        $global:id = "$ID"
         $global:id = "P"+$global:id
 
         $nameOS = (Get-WmiObject Win32_OperatingSystem).Name.Split("|")[0]
