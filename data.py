@@ -974,6 +974,9 @@ def insert_user():
     s.bulk_save_objects(objects)
     s.commit()
 
+# Función para insertar valor inicial de la única fila que tendrá la tabla
+# pending_plan.
+
 def insert_pending():    
     objects = [
         models.Pending_DB(IDPending = '1', Pending_IDPlan = None)

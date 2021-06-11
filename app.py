@@ -346,11 +346,13 @@ def InsertarDatos_BD(objetos):
 
         insertar_Tarea(tareas[i],IDPlan,IDIntel)
 
-# Nueva función para obtener plan pendiente
+# Función para obtener plan pendiente de base de datos
+
 def get_pending_plan():    
     return db.session.query(models.Pending_DB).filter_by(IDPending = '1').first()
 
-# Nueva función para generar Alias de warrior aquí, en lugar de en powershell
+# Función para generar id de warrior aquí, en lugar de en powershell
+
 def generate_warrior_id():
 	res = ""
 	possibs = string.ascii_letters + string.digits
@@ -359,6 +361,9 @@ def generate_warrior_id():
 	return res
 
 # elimina un plan pasado por post
+# Si el plan a eliminar se corresponde con el del plan pendiente,
+# asignar valor None al id del plan pendiente.
+
 @app.route('/deletePlan',methods=['GET', 'POST'])
 def deletePlan():
 
@@ -1051,6 +1056,9 @@ def addDataStore(warriorAlias):
         IDWarrior = warrior.IDWarrior
         return render_template("addLoot.html",IDWarrior = IDWarrior,Alias = warriorAlias)
 
+# Segundo paso. Generamos id del Warrior en el servidor en lugar de
+# en el cliente y añadimos id a console_template para que la consola
+# tenga disponible el id desde el principio.
 
 @app.route('/warriors',methods=['GET', 'POST'])
 def warriors():
@@ -1444,6 +1452,8 @@ def Ins_Directive():
         db.session.commit()
     return redirect("Warrior_Orders/"+IDWarrior)
 '''
+# Inicio del nuevo flujo. Al seleccionar el usuario un plan,
+# almacenamos su id en tabla pending_plan.
 
 @app.route('/sel_plan_/<IDPlan>',methods=['GET', 'POST'])
 def selplan(IDPlan):
@@ -1748,6 +1758,12 @@ def givemefunctionfile(fileName):
         return scheduler.encode("utf-8")
     return ""
 
+# Último paso. El servidor comprueba si existe el warrior correspondiente
+# al id recibido, y en caso de existir comprueba si hay un plan pendiente
+# por asignar. Si hay, guardamos los tasks correspondientes al plan
+# pendiente en el servidor y asignamos el valor None a la variable que
+# contiene el id del plan pendiente en la base de datos.
+
 @app.route('/getplan',methods=['POST'])
 def getplan():
     AliasWarrior = request.form['id'] #  warrior Alias
@@ -1911,6 +1927,11 @@ def putresult():
                 Directiva.Done = "true"
                 db.session.commit()
     return "200"
+
+# Tercer paso. El servidor recibe todos los datos del warrior
+# y los almacena en la base de datos si existe un plan pendiente
+# por asignar. En caso contrario, envía error a consola y la consola
+# termina su ejecución.
 
 @app.route('/hi',methods=['POST'])
 def hi():

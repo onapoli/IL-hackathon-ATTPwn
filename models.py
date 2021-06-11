@@ -146,6 +146,11 @@ class Users_DB(db.Model):
     def verify_password(self, password):
 	    return seguridad.check_password_hash(self.password_hash, password)
 
+# Modelo para almacenar planes pendientes de asignar a warriors.
+# La idea es que sirva como una especia de sesión, y que una vez que
+# se asigne el plan pendiente, su valor pase a None de nuevo.
+# Solo se almacenará un plan pendiente para un warrior de cualquier usuario,
+# y no uno por usuario y por warrior.
 
 class Pending_DB(db.Model):
 	__tablename__ 				= "pending_plan"

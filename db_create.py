@@ -11,6 +11,7 @@ import data as ins_records
 import os.path
 import time
 # import db_upgrade as upgrade_db
+# añadido ins_records.insert_pending()
 def create_database():
     iniciar = False
     if not os.path.exists(SQLALCHEMY_DATABASE_DIR):

