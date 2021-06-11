@@ -13,8 +13,13 @@ def logout_user():
     session.pop("username", None)
     session.pop("admin", None)
 
+# Función para almacenar clave de sesión que indique si el usuario
+# intentó registrarse cuando aún no se había creado la base de datos.
+
 def store_login_again():
 	session["login_again"] = True
+
+# Función para eliminar de la sesión del usuario la clave login_again
 
 def remove_login_again():
 	session.pop("login_again", None)
@@ -27,6 +32,8 @@ def is_login():
 
 def is_admin():
     return session.get("admin", False)
+
+# Función para comprobar si la clave login_again existe en la sesión del usuario.
 
 def is_login_again():
 	if "login_again" in session:

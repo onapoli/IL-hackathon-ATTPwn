@@ -32,6 +32,8 @@
 </nav>
 {% endblock nav %} {% block content %}
 <!--  Flash messages-->
+<!--  SE HAN ELIMINADO LOS id DE LOS TRES div QUE CONTIENEN MENSAJES,
+	 	PORQUE SE PODRÁ MOSTRAR MÁS DE UN MENSAJE A LA VEZ.-->
 <div class="row flash justify-content-center">
     <div class="col-md-12 text-center plan-card justify-content-center">
         {% with messages = get_flashed_messages(with_categories=true) %} {% if messages %} {% for category, message in messages %} {% if "success" in category %}
@@ -105,6 +107,11 @@
     </div>
 </div>
 <script>
+	/*
+	** CAMBIADO REFERENCIA A id #alert por class .alert para que pueda afectar
+	**	a más de un elemento.
+	*/
+
     setTimeout(function() {
         $(".alert").fadeOut("fast");
     }, 5500); // <-- time in milliseconds

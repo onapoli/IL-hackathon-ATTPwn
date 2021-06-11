@@ -410,10 +410,12 @@ def Implementation():
     return render_template("implementation.html",tacticList = tacticList,techniqueList = techniqueList  )
 
 
-# Añadido if para comprobar si la base de datos existe. Si no existe, redirigir a index para generar base de datos,
-# y si fuera una POST request, guardar clave en sesión para saber que el usuario envió credenciales.
-# Cuando la base de datos exista, comprobar la sesión, y en caso de que se tenga que reintroducir credenciales,
-# mostrar flash message orientativo.
+# Añadido if para comprobar si la base de datos existe. Si no existe, redirigir
+# a index para generar base de datos, y si fuera una POST request, guardar clave
+# en sesión para saber que el usuario envió credenciales.
+# Cuando la base de datos exista, comprobar la sesión, y en caso de que se tenga
+# que reintroducir credenciales, mostrar flash message orientativo.
+
 @app.route('/login',methods=['GET', 'POST'])
 def login():
     from  models import Users_DB
