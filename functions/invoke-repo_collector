@@ -78,6 +78,13 @@ function Repo-Collector {
         $raw_url = ""
 
         # Get remote url of git repo, if it exists.
+        <# This git command is enclosed in a try catch block because when
+        ## installing Git on Windows, the installation wizard gives the
+        ## option of making Git available for Powershell in addition to
+        ## Git Bash. Can't remember if that was the default option. So,
+        ## executing this command from Powershell might raise an error
+        ## even if Git is installed on the system. Didn't test this.
+        #>
         try {
             $raw_url = git config --get remote.origin.url
         }
